@@ -2,10 +2,10 @@ package com.example.university.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import java.util.ArrayList;
 
-import com.example.university.service.CourseJpaService;
 import com.example.university.model.*;
-
+import com.example.university.service.CourseJpaService;
 import java.util.*;
 
 @RestController
@@ -16,7 +16,7 @@ public class CourseController {
     @GetMapping("/courses")
     public ArrayList<Course> getCourses() {
         return courseJpaService.getCourses();
-    }`
+    }
 
     @GetMapping("/courses/{courseId}")
     public Course getCourseById(@PathVariable("courseId") int courseId) {

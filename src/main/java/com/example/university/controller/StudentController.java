@@ -12,7 +12,7 @@ import java.util.*;
 public class StudentController {
     @Autowired
     private StudentJpaService studentJpaService;
-`
+
     @GetMapping("/students")
     public ArrayList<Student> getStudents() {
         return studentJpaService.getStudents();

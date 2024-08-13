@@ -1,7 +1,6 @@
 package com.example.university.repository;
 
 import com.example.university.model.*;
-
 import java.util.*;
 
 public interface StudentRepository {

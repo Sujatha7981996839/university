@@ -8,5 +8,4 @@ import java.util.*;
 @Repository
 public interface CourseJpaRepository extends JpaRepository<Course, Integer> {
     ArrayList<Course> findByProfessor(Professor professor);
-
 }

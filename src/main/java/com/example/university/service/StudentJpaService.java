@@ -13,135 +13,129 @@ import com.example.university.model.*;
 import com.example.university.model.Course;
 
 import com.example.university.repository.*;
-import java.util.NoSuchElementException;
+import java.util.NoSuchElementException;;
 
 @Service
-public class StudentJpaService implements studentRepository {
+public class StudentJpaService implements StudentRepository {
 
-    @Autowired
-    private StudentJpaRepository studentJpaRepository;
+	@Autowired
+	private StudentJpaRepository studentJpaRepository;
 
-    @Autowired
-    private CourseJpaRepository courseJpaRepository;
+	@Autowired
+	private CourseJpaRepository courseJpaRepository;
 
-    @Override
-    public ArrayList<Student> getStudents() {
-        List<Student> studentList = studentJpaRepository.findAll();
-        ArrayList<Student> students = new ArrayList<>(studentList);
-        return students;
-    }
+	@Override
+	public ArrayList<Student> getStudents() {
+		List<Student> studentList = studentJpaRepository.findAll();
+		ArrayList<Student> students = new ArrayList<>(studentList);
+		return students;
+	}
 
-    @Override
-    public Student getStudentById(int studentId) {
-        try {
-            Student student = studentJpaRepository.findById(studentId).get();
-            return student;
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-    }
+	@Override
+	public Student getStudentById(int studentId) {
+		try {
+			Student student = studentJpaRepository.findById(studentId).get();
+			return student;
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+		}
+	}
 
-    @Override
-    public Student addStudent(Student student) {
-        try {
-            List<Integer> courseIds = new ArrayList<>();
+	@Override
+	public Student addStudent(Student student) {
+		List<Integer> courseIds = new ArrayList<>();
+		for (Course course : student.getCourses()) {
+			courseIds.add(course.getCourseId());
+		}
+		List<Course> courses = courseJpaRepository.findAllById(courseIds);
 
-            for (Course course : student.getCourses()) {
-                courseIds.add(course.getCourseId());
-            }
+		if (courses.size() != courseIds.size()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Some courses are not found...");
+		}
 
-            List<Course> courses = courseJpaRepository.findAllById(courseIds);
+		student.setCourses(courses);
 
-            if (courses.size() != courseIds.size()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Some Students are not found...");
-            }
+		for (Course course : courses) {
+			course.getStudents().add(student);
+		}
 
-            student.setCourses(courses);
+		Student savedStudent = studentJpaRepository.save(student);
 
-            for(Course course : courses){
-                course.getStudents().add(student);
-            }
+		courseJpaRepository.saveAll(courses);
 
-            Student savedStudent = studentJpaRepository.save(student);
+		return savedStudent;
 
-            courseJpaRepository.saveAll(courses);
-            
-            return savedStudent;
-        }
-    }
+	}
 
-    @Override
-    public Student updateStudent(int studentId, Student student) {
-        try {
-            Student newStudent = studentJpaRepository.findById(studentId).get();
-            if (student.getStudentName() != null) {
-                newStudent.setStudentName(student.getStudentName());
-            }
+	@Override
+	public Student updateStudent(int studentId, Student student) {
+		try {
+			Student newStudent = studentJpaRepository.findById(studentId).get();
+			if (student.getStudentName() != null) {
+				newStudent.setStudentName(student.getStudentName());
+			}
+			if (student.getEmail() != null) {
+				newStudent.setEmail(student.getEmail());
+			}
+			if (student.getCourses() != null) {
 
-            if (student.getEmail() != null) {
-                newStudent.setEmail(student.getEmails());
-            }
+				List<Course> courses = newStudent.getCourses();
+				for (Course course : courses) {
+					course.getStudents().remove(newStudent);
+				}
+				courseJpaRepository.saveAll(courses);
 
-            if (student.getCourses() != null) {
+				List<Integer> newCourseIds = new ArrayList<>();
+				for (Course course : student.getCourses()) {
+					newCourseIds.add(course.getCourseId());
+				}
 
-                List<Course> courses = newStudent.getCourses();
+				List<Course> newCourses = courseJpaRepository.findAllById(newCourseIds);
 
-                for (Course course : courses) {
-                    course.getStudents().remove(newStudent);
-                }
-                courseJpaRepository.saveAll(courses);
+				if (newCourses.size() != newCourseIds.size()) {
+					throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Some courses are not found...");
+				}
 
-                List<Integer> newCourseIds = new ArrayList<>();
+				for (Course course : newCourses) {
+					course.getStudents().add(newStudent);
+				}
+				courseJpaRepository.saveAll(newCourses);
 
-                for (Course course : student.getCourses()) {
-                    newCourseIds.add(course.getCourseId());
-                }
+				newStudent.setCourses(newCourses);
+			}
+			return studentJpaRepository.save(newStudent);
 
-                List<Course> newCourses = courseJpaRepository.findAllById(newCourseIds);
+		} catch (NoSuchElementException e) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+		}
+	}
 
-                if (newCourses.size() != newCourseIds.size()) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Some courses are not found...");
-                }
+	@Override
+	public void deleteStudent(int studentId) {
+		try {
+			Student student = studentJpaRepository.findById(studentId).get();
+			List<Course> courses = student.getCourses();
 
-                for (Course course : newCourses) {
-                    course.getStudents().add(newStudent);
-                }
-                courseJpaRepository.saveAll(newCourses);
+			for (Course course : courses) {
+				course.getStudents().remove(student);
+			}
 
-                newStudent.setCourses(newCourses);
-            }
-            return studentJpaRepository.save(newStudent);
-        } catch (NoSuchElementException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-    }
+			courseJpaRepository.saveAll(courses);
+			studentJpaRepository.deleteById(studentId);
 
-    @Override
-    public void deleteStudent(int studentId) {
-        try {
-            Student student = studentJpaRepository.findById(studentId).get();
-            List<Course> courses = student.getCourses();
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+		}
+		throw new ResponseStatusException(HttpStatus.NO_CONTENT);
+	}
 
-            for(Course course : courses){
-                course.getStudents().remove(student);
-            }
-
-            courseJpaRepository.saveAll(courses)
-            studentJpaRepository.deleteById(studentId);
-
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        throw new ResponseStatusException(HttpStatus.NO_CONTENT);
-    }
-
-    @Override
-    public List<Course> getStudentCourses(int studentId) {
-        try {
-            Student student = studentJpaRepository.findById(studentId).get();
-            return student.getCourses();
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-    }
+	@Override
+	public List<Course> getStudentCourses(int studentId) {
+		try {
+			Student student = studentJpaRepository.findById(studentId).get();
+			return student.getCourses();
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+		}
+	}
 }

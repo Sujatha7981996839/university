@@ -1,10 +1,8 @@
 package com.example.university.model;
 
-import javax.persistence.*;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import java.util.*;
+import javax.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "course")
@@ -27,7 +25,6 @@ public class Course {
     @ManyToMany
     @JoinTable(name = "course_student", joinColumns = @JoinColumn(name = "courseid"), inverseJoinColumns = @JoinColumn(name = "studentid"))
     @JsonIgnoreProperties("courses")
-
     private List<Student> students = new ArrayList<>();
 
     public Course() {

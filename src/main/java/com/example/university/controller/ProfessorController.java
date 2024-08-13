@@ -3,6 +3,7 @@ package com.example.university.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
+
 import com.example.university.model.*;
 import com.example.university.service.ProfessorJpaService;
 import java.util.*;

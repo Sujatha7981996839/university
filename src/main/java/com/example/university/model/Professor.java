@@ -25,6 +25,7 @@ public class Professor {
         this.professorId = professorId;
         this.professorName = professorName;
         this.department = department;
+
     }
 
     public int getProfessorId() {
